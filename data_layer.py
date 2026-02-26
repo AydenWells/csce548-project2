@@ -64,3 +64,25 @@ def delete_student(student_id):
     changed = cur.rowcount
     conn.close()
     return changed > 0
+
+# -------- Project 3 additions below --------
+
+def get_all_students():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, email FROM student ORDER BY id")
+    rows = cur.fetchall()
+    conn.close()
+    return [{"id": r[0], "name": r[1], "email": r[2]} for r in rows]
+
+
+def search_students_by_name(name_substring):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT id, name, email FROM student WHERE name LIKE ? ORDER BY id",
+        (f"%{name_substring}%",),
+    )
+    rows = cur.fetchall()
+    conn.close()
+    return [{"id": r[0], "name": r[1], "email": r[2]} for r in rows]

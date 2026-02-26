@@ -1,7 +1,9 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import business_layer
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Hosting instructions (put this comment in your submission!)
 # Run locally:
@@ -37,10 +39,18 @@ def get_student(student_id):
 @app.route("/student", methods=["PUT"])
 def update_student():
     data = request.get_json(force=True)
+
+    student_id = data.get("id")
+    if student_id is None:
+        return jsonify({"error": "Missing id"}), 400
+
     try:
-        ok = business_layer.modify_student(
-            int(data.get("id")), data.get("name"), data.get("email")
-        )
+        student_id = int(student_id)
+    except Exception:
+        return jsonify({"error": "id must be a number"}), 400
+
+    try:
+        ok = business_layer.modify_student(student_id, data.get("name"), data.get("email"))
         if not ok:
             return jsonify({"error": "Student not found"}), 404
         return jsonify({"updated": True}), 200
@@ -54,6 +64,16 @@ def delete_student(student_id):
     if not ok:
         return jsonify({"error": "Student not found"}), 404
     return jsonify({"deleted": True}), 200
+
+@app.route("/students", methods=["GET"])
+def get_all_students():
+    return jsonify(business_layer.fetch_all_students()), 200
+
+
+@app.route("/students/search", methods=["GET"])
+def search_students():
+    q = request.args.get("q", "")
+    return jsonify(business_layer.fetch_students_by_name(q)), 200
 
 
 if __name__ == "__main__":

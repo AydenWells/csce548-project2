@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>CSCE 548 Project 3 - Student Client</title>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    input { margin: 4px; padding: 6px; }
+    button { margin: 4px; padding: 6px 10px; }
+    .card { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
+    pre { background: #f4f4f4; padding: 10px; min-height: 40px; }
+  </style>
+</head>
+<body>
+  <h1>Project 3 Front End (Student)</h1>
+  <p>API: <b>http://127.0.0.1:5000</b></p>
+
+  <div class="card">
+    <h2>GET Single Student</h2>
+    <input id="getId" placeholder="Student ID" />
+    <button onclick="getOne()">Get Student</button>
+    <pre id="getOneOut"></pre>
+  </div>
+
+  <div class="card">
+    <h2>GET All Students</h2>
+    <button onclick="getAll()">Get All</button>
+    <pre id="getAllOut"></pre>
+  </div>
+
+  <div class="card">
+    <h2>GET Subset (Search by name)</h2>
+    <input id="searchQ" placeholder="Search text (ex: Ay)" />
+    <button onclick="searchByName()">Search</button>
+    <pre id="searchOut"></pre>
+  </div>
+
+  <div class="card">
+    <h2>INSERT Student</h2>
+    <input id="insName" placeholder="Name" />
+    <input id="insEmail" placeholder="Email" />
+    <button onclick="insertStudent()">Insert</button>
+    <pre id="insertOut"></pre>
+  </div>
+
+  <div class="card">
+    <h2>UPDATE Student</h2>
+    <input id="upId" placeholder="ID" />
+    <input id="upName" placeholder="New Name" />
+    <input id="upEmail" placeholder="New Email" />
+    <button onclick="updateStudent()">Update</button>
+    <pre id="updateOut"></pre>
+  </div>
+
+  <div class="card">
+    <h2>DELETE Student</h2>
+    <input id="delId" placeholder="ID" />
+    <button onclick="deleteStudent()">Delete</button>
+    <pre id="deleteOut"></pre>
+  </div>
+
+<script>
+const BASE = "http://127.0.0.1:5000";
+
+async function show(preId, res) {
+  const text = await res.text();
+  document.getElementById(preId).textContent = `HTTP ${res.status}\n\n${text}`;
+}
+
+async function getOne() {
+  try {
+    const id = document.getElementById("getId").value.trim();
+    const res = await fetch(`${BASE}/student/${id}`);
+    await show("getOneOut", res);
+  } catch (e) {
+    document.getElementById("getOneOut").textContent = `ERROR: ${e}`;
+  }
+}
+
+async function getAll() {
+  try {
+    const res = await fetch(`${BASE}/students`);
+    await show("getAllOut", res);
+  } catch (e) {
+    document.getElementById("getAllOut").textContent = `ERROR: ${e}`;
+  }
+}
+
+async function searchByName() {
+  try {
+    const q = document.getElementById("searchQ").value;
+    const res = await fetch(`${BASE}/students/search?q=${encodeURIComponent(q)}`);
+    await show("searchOut", res);
+  } catch (e) {
+    document.getElementById("searchOut").textContent = `ERROR: ${e}`;
+  }
+}
+
+async function insertStudent() {
+  try {
+    const name = document.getElementById("insName").value;
+    const email = document.getElementById("insEmail").value;
+    const res = await fetch(`${BASE}/student`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({name, email})
+    });
+    await show("insertOut", res);
+  } catch (e) {
+    document.getElementById("insertOut").textContent = `ERROR: ${e}`;
+  }
+}
+
+async function updateStudent() {
+  try {
+    const id = parseInt(document.getElementById("upId").value);
+    const name = document.getElementById("upName").value;
+    const email = document.getElementById("upEmail").value;
+    const res = await fetch(`${BASE}/student`, {
+      method: "PUT",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({id, name, email})
+    });
+    await show("updateOut", res);
+  } catch (e) {
+    document.getElementById("updateOut").textContent = `ERROR: ${e}`;
+  }
+}
+
+async function deleteStudent() {
+  try {
+    const id = document.getElementById("delId").value;
+    const res = await fetch(`${BASE}/student/${id}`, { method: "DELETE" });
+    await show("deleteOut", res);
+  } catch (e) {
+    document.getElementById("deleteOut").textContent = `ERROR: ${e}`;
+  }
+}
+</script>
+</body>
+</html>
