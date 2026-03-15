@@ -2,138 +2,246 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>CSCE 548 Project 3 - Student Client</title>
+  <title>Student Manager</title>
   <style>
-    body { font-family: Arial; margin: 20px; }
-    input { margin: 4px; padding: 6px; }
-    button { margin: 4px; padding: 6px 10px; }
-    .card { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
-    pre { background: #f4f4f4; padding: 10px; min-height: 40px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f7f7f7;
+    }
+
+    h1 {
+      color: #222;
+    }
+
+    .section {
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    input {
+      padding: 8px;
+      margin: 5px 5px 10px 0;
+      width: 200px;
+    }
+
+    button {
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .result {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f1f1f1;
+      border-radius: 6px;
+      min-height: 20px;
+    }
+
+    .student-card {
+      border: 1px solid #aaa;
+      border-radius: 6px;
+      padding: 10px;
+      margin-top: 10px;
+      background: #ffffff;
+    }
+
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+
+    .error {
+      color: red;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <h1>Project 3 Front End (Student)</h1>
-  <p>API: <b>http://127.0.0.1:5000</b></p>
+  <h1>Student Manager</h1>
+  <p>Welcome! Use this page to add, search, update, view, and delete student records.</p>
 
-  <div class="card">
-    <h2>GET Single Student</h2>
-    <input id="getId" placeholder="Student ID" />
-    <button onclick="getOne()">Get Student</button>
-    <pre id="getOneOut"></pre>
+  <div class="section">
+    <h2>View One Student</h2>
+    <input id="getId" placeholder="Enter student ID" />
+    <button onclick="getOne()">View Student</button>
+    <div id="getOneOut" class="result"></div>
   </div>
 
-  <div class="card">
-    <h2>GET All Students</h2>
-    <button onclick="getAll()">Get All</button>
-    <pre id="getAllOut"></pre>
+  <div class="section">
+    <h2>View All Students</h2>
+    <button onclick="getAll()">Show All Students</button>
+    <div id="getAllOut" class="result"></div>
   </div>
 
-  <div class="card">
-    <h2>GET Subset (Search by name)</h2>
-    <input id="searchQ" placeholder="Search text (ex: Ay)" />
+  <div class="section">
+    <h2>Search Students by Name</h2>
+    <input id="searchQ" placeholder="Enter part of a name" />
     <button onclick="searchByName()">Search</button>
-    <pre id="searchOut"></pre>
+    <div id="searchOut" class="result"></div>
   </div>
 
-  <div class="card">
-    <h2>INSERT Student</h2>
-    <input id="insName" placeholder="Name" />
-    <input id="insEmail" placeholder="Email" />
-    <button onclick="insertStudent()">Insert</button>
-    <pre id="insertOut"></pre>
+  <div class="section">
+    <h2>Add a Student</h2>
+    <input id="insName" placeholder="Student name" />
+    <input id="insEmail" placeholder="Student email" />
+    <button onclick="insertStudent()">Add Student</button>
+    <div id="insertOut" class="result"></div>
   </div>
 
-  <div class="card">
-    <h2>UPDATE Student</h2>
-    <input id="upId" placeholder="ID" />
-    <input id="upName" placeholder="New Name" />
-    <input id="upEmail" placeholder="New Email" />
-    <button onclick="updateStudent()">Update</button>
-    <pre id="updateOut"></pre>
+  <div class="section">
+    <h2>Update a Student</h2>
+    <input id="upId" placeholder="Student ID" />
+    <input id="upName" placeholder="New name" />
+    <input id="upEmail" placeholder="New email" />
+    <button onclick="updateStudent()">Update Student</button>
+    <div id="updateOut" class="result"></div>
   </div>
 
-  <div class="card">
-    <h2>DELETE Student</h2>
-    <input id="delId" placeholder="ID" />
-    <button onclick="deleteStudent()">Delete</button>
-    <pre id="deleteOut"></pre>
+  <div class="section">
+    <h2>Delete a Student</h2>
+    <input id="delId" placeholder="Student ID" />
+    <button onclick="deleteStudent()">Delete Student</button>
+    <div id="deleteOut" class="result"></div>
   </div>
 
 <script>
 const BASE = "http://127.0.0.1:5000";
 
-async function show(preId, res) {
-  const text = await res.text();
-  document.getElementById(preId).textContent = `HTTP ${res.status}\n\n${text}`;
+function displayStudent(student) {
+  return `
+    <div class="student-card">
+      <p><strong>Student ID:</strong> ${student.id}</p>
+      <p><strong>Name:</strong> ${student.name}</p>
+      <p><strong>Email:</strong> ${student.email}</p>
+    </div>
+  `;
+}
+
+function displayStudentList(students) {
+  if (!students || students.length === 0) {
+    return `<p class="error">No students found.</p>`;
+  }
+  return students.map(displayStudent).join("");
 }
 
 async function getOne() {
+  const id = document.getElementById("getId").value.trim();
+  const out = document.getElementById("getOneOut");
+
   try {
-    const id = document.getElementById("getId").value.trim();
     const res = await fetch(`${BASE}/student/${id}`);
-    await show("getOneOut", res);
+    const data = await res.json();
+
+    if (!res.ok) {
+      out.innerHTML = `<p class="error">${data.error}</p>`;
+      return;
+    }
+
+    out.innerHTML = displayStudent(data);
   } catch (e) {
-    document.getElementById("getOneOut").textContent = `ERROR: ${e}`;
+    out.innerHTML = `<p class="error">Could not fetch student.</p>`;
   }
 }
 
 async function getAll() {
+  const out = document.getElementById("getAllOut");
+
   try {
     const res = await fetch(`${BASE}/students`);
-    await show("getAllOut", res);
+    const data = await res.json();
+    out.innerHTML = displayStudentList(data);
   } catch (e) {
-    document.getElementById("getAllOut").textContent = `ERROR: ${e}`;
+    out.innerHTML = `<p class="error">Could not load students.</p>`;
   }
 }
 
 async function searchByName() {
+  const q = document.getElementById("searchQ").value.trim();
+  const out = document.getElementById("searchOut");
+
   try {
-    const q = document.getElementById("searchQ").value;
     const res = await fetch(`${BASE}/students/search?q=${encodeURIComponent(q)}`);
-    await show("searchOut", res);
+    const data = await res.json();
+    out.innerHTML = displayStudentList(data);
   } catch (e) {
-    document.getElementById("searchOut").textContent = `ERROR: ${e}`;
+    out.innerHTML = `<p class="error">Search failed.</p>`;
   }
 }
 
 async function insertStudent() {
+  const name = document.getElementById("insName").value.trim();
+  const email = document.getElementById("insEmail").value.trim();
+  const out = document.getElementById("insertOut");
+
   try {
-    const name = document.getElementById("insName").value;
-    const email = document.getElementById("insEmail").value;
     const res = await fetch(`${BASE}/student`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({name, email})
+      body: JSON.stringify({ name, email })
     });
-    await show("insertOut", res);
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      out.innerHTML = `<p class="error">${data.error}</p>`;
+      return;
+    }
+
+    out.innerHTML = `<p class="success">Student added successfully! New student ID: ${data.id}</p>`;
   } catch (e) {
-    document.getElementById("insertOut").textContent = `ERROR: ${e}`;
+    out.innerHTML = `<p class="error">Could not add student.</p>`;
   }
 }
 
 async function updateStudent() {
+  const id = document.getElementById("upId").value.trim();
+  const name = document.getElementById("upName").value.trim();
+  const email = document.getElementById("upEmail").value.trim();
+  const out = document.getElementById("updateOut");
+
   try {
-    const id = parseInt(document.getElementById("upId").value);
-    const name = document.getElementById("upName").value;
-    const email = document.getElementById("upEmail").value;
     const res = await fetch(`${BASE}/student`, {
       method: "PUT",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({id, name, email})
+      body: JSON.stringify({ id, name, email })
     });
-    await show("updateOut", res);
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      out.innerHTML = `<p class="error">${data.error}</p>`;
+      return;
+    }
+
+    out.innerHTML = `<p class="success">Student updated successfully.</p>`;
   } catch (e) {
-    document.getElementById("updateOut").textContent = `ERROR: ${e}`;
+    out.innerHTML = `<p class="error">Could not update student.</p>`;
   }
 }
 
 async function deleteStudent() {
+  const id = document.getElementById("delId").value.trim();
+  const out = document.getElementById("deleteOut");
+
   try {
-    const id = document.getElementById("delId").value;
-    const res = await fetch(`${BASE}/student/${id}`, { method: "DELETE" });
-    await show("deleteOut", res);
+    const res = await fetch(`${BASE}/student/${id}`, {
+      method: "DELETE"
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      out.innerHTML = `<p class="error">${data.error}</p>`;
+      return;
+    }
+
+    out.innerHTML = `<p class="success">Student deleted successfully.</p>`;
   } catch (e) {
-    document.getElementById("deleteOut").textContent = `ERROR: ${e}`;
+    out.innerHTML = `<p class="error">Could not delete student.</p>`;
   }
 }
 </script>
